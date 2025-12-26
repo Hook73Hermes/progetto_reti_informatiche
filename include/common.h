@@ -11,9 +11,12 @@
 #include <sys/select.h>
 
 #define PORTA_LAVAGNA 5678
-#define LUNGHEZZA_TESTO 32
+#define LUNGHEZZA_TESTO 20
 #define MAX_UTENTI 100
 #define NUM_COLONNE 3
+#define NUM_CARD_INIZIALI 10
+#define MAX_CARD_DISPLAY 100 
+#define LARGHEZZA_DISPLAY_COLONNA 40
 
 // Colonne della lavagna
 enum Colonne {
@@ -68,6 +71,5 @@ struct Messaggio_utente_lavagna {
     uint16_t colonna;           // Uno dei valori enum Colonne
     char testo[LUNGHEZZA_TESTO]; 
 } __attribute__((packed));      // niente padding
-
 
 #endif

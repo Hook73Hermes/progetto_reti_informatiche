@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include <string.h> 
 #include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include "protocollo_lavagna.h"
 
@@ -15,8 +15,7 @@ void invia_messaggio(uint32_t socket_fd, enum Comandi_lavagna_utente comando, st
 
     if (card != NULL) {
         msg.id_card = htons(card->id);
-        strncpy(msg.testo, card->testo, LUNGHEZZA_TESTO - 1);
-        msg.testo[LUNGHEZZA_TESTO - 1] = '\0';
+        snprintf(msg.testo, LUNGHEZZA_TESTO, "%s", card->testo);
     }
 
     if (utenti_connessi != NULL && num_utenti > 0) {
@@ -41,7 +40,7 @@ int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_utente_lavagna * m
     }
     if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_utente_lavagna)) {
         perror("Errore ricezione messaggio Utente -> Lavagna: ");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     msg->comando_utente = ntohs(msg->comando_utente);

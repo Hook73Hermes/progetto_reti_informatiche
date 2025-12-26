@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include "protocollo_utente.h"
 
@@ -15,11 +15,7 @@ void invia_messaggio(uint32_t socket_fd, enum Comandi_utente_lavagna comando, ui
     msg.porta_utente = htons(porta_utente);
     msg.id_card = htons(id_card);
     msg.colonna = htons((uint16_t)colonna);
-
-    if (testo != NULL) {
-        strncpy(msg.testo, testo, LUNGHEZZA_TESTO - 1);
-        msg.testo[LUNGHEZZA_TESTO - 1] = '\0'; // Garantisce il terminatore di stringa
-    }
+    if (testo != NULL) snprintf(msg.testo, LUNGHEZZA_TESTO, "%s", testo);
 
     if (send(socket_fd, &msg, sizeof(msg), 0) < 0) {
         perror("Errore invio messaggio Utente -> Lavagna: ");
