@@ -24,7 +24,6 @@ enum Colonne {
 
 // Codici comando per il protocollo Lavagna -> Utente
 enum Comandi_lavagna_utente {
-    CMD_WELCOME,                // Risposta al HELLO (conferma registrazione)
     CMD_HANDLE_CARD,            // "Push" di una card da eseguire 
     CMD_USER_LIST,              // Risposta a REQUEST_USER_LIST
     CMD_PING,                   // Heartbeat

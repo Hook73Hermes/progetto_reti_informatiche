@@ -41,7 +41,7 @@ int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_utente_lavagna * m
     }
     if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_utente_lavagna)) {
         perror("Errore ricezione messaggio Utente -> Lavagna: ");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     msg->comando_utente = ntohs(msg->comando_utente);

@@ -16,7 +16,7 @@ struct Card {
     uint16_t id;
     enum Colonne colonna;
     char testo[LUNGHEZZA_TESTO];
-    struct Utente utente;
+    struct Utente * utente;
     time_t ultima_modifica;
     struct Card * successiva;
 };

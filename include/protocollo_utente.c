@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#include "protocollo_lavagna.h"
+#include "protocollo_utente.h"
 
 // Invia un messaggio generico utente -> lavagna
 // Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
@@ -36,7 +36,7 @@ int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_lavagna_utente * m
     }
     if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_lavagna_utente)) {
         perror("Errore nella ricezione messaggio Lavagna -> Utente: ");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     msg->comando_lavagna = ntohs(msg->comando_lavagna);
