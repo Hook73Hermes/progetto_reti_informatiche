@@ -2,15 +2,15 @@
 
 // Struttura per gli utenti
 struct Utente {
-    int32_t socket_utente;
+    uint32_t socket_utente;
     uint16_t porta_utente;
-    int32_t attivo;
+    uint16_t attivo;
     struct Utente * successivo;
 };
 
 // Struttura per la Card
 struct Card {
-    int32_t id;
+    uint16_t id;
     enum Colonne colonna;
     char testo[LUNGHEZZA_TESTO];
     struct Utente utente;
@@ -20,11 +20,11 @@ struct Card {
 
 // Stato globale della lavagna
 struct Card * lavagna;
-struct Utente * primo_utente;
+struct Utente * lista_utenti;
 
 // Utenti connessi identificati dal numero di porta
 uint16_t utenti_connessi[MAX_UTENTI];       
-uint32_t num_utenti = 0;
+uint16_t num_utenti = 0;
 
 // Stampa la lavagna a video
 void show_lavagna() {
@@ -39,13 +39,13 @@ void show_lavagna() {
     // Stampa a video la lavagna
     printf("\n--- STATO LAVAGNA ---\n\n");
     while (1) {
-        int32_t colonne_modificate = 0;   
-        for (int32_t num_colonna = 0; num_colonna < NUM_COLONNE; num_colonna++) {
+        uint16_t colonne_modificate = 0;   
+        for (uint16_t num_colonna = 0; num_colonna < NUM_COLONNE; num_colonna++) {
             printf("| ");
             if (card_inizio_colonna[num_colonna]) {
                 char testo[LUNGHEZZA_TESTO];
                 strcpy(testo, card_inizio_colonna[num_colonna]->testo);
-                for (int32_t i = strlen(testo); i < LUNGHEZZA_TESTO - 1; i++) {
+                for (u_int16_t i = strlen(testo); i < LUNGHEZZA_TESTO - 1; i++) {
                     testo[i] = ' ';
                 }
                 testo[LUNGHEZZA_TESTO - 1] = '\0';
@@ -62,20 +62,13 @@ void show_lavagna() {
     printf("\n---------------------\n\n");
 }
 
-// Assegna card all'utente
-void handle_card_push(uint32_t socket_utente, int indice_card, int porta_dest) {
-    // Invia comando HANDLE_CARD con i dati della card e lista utenti [cite: 58]
-    // MOVE_CARD verrà eseguito alla ricezione dell'ACK_CARD [cite: 43, 59, 80]
-}
-
-int32_t main(int argc, char * argv[]) {
-    int32_t socket_lavagna;                         // File descriptor del socket per le richieste di connessione TCP
+int32_t main() {
+    uint32_t socket_lavagna;                        // File descriptor del socket per le richieste di connessione TCP
     struct sockaddr_in indirizzo_lavagna;           // Indirizzo del server lavagna
     uint32_t addrlen = sizeof(indirizzo_lavagna);   // Lunghezza della struttura in byte
 
     fd_set descrittori_lettura;                     // Set dei descrittori su cui fare polling
-    int32_t socket_utenti[MAX_UTENTI] = {0};        // Array per gestire i socket attivi
-    int32_t max_sd;                                 // Socket con ID massimo
+    uint32_t max_socket;                                // Socket con ID massimo
     struct timeval timeout;                         // Parametro per la accept()
 
     // Inizializzazione Card (almeno 10)
@@ -120,14 +113,14 @@ int32_t main(int argc, char * argv[]) {
     while (1) {
         FD_ZERO(&descrittori_lettura);
         FD_SET(socket_lavagna, &descrittori_lettura);
-        max_sd = socket_lavagna;
+        max_socket = socket_lavagna;
 
         // Aggiunge i socket degli utenti già connessi al set e calcola il massimo
-        for (int32_t i = 0; i < MAX_UTENTI; i++) {
-            int32_t sd = socket_utenti[i];
-            if (sd > 0) {
-                FD_SET(sd, &descrittori_lettura);
-                max_sd = (sd > max_sd) ? sd : max_sd;
+        for (struct Utente * utente = lista_utenti; utente; utente = utente->successivo) {
+            uint32_t socket_utente = utente->socket_utente;
+            if (socket_utente > 0) {
+                FD_SET(socket_utente, &descrittori_lettura);
+                max_socket = (socket_utente > max_socket) ? socket_utente : max_socket;
             }
         }
 
@@ -135,8 +128,8 @@ int32_t main(int argc, char * argv[]) {
         timeout.tv_sec = 90; 
         timeout.tv_usec = 0;
 
-        int32_t num_descrittori_pronti = select(max_sd + 1, &descrittori_lettura, NULL, NULL, &timeout);
-        if (num_descrittori_pronti < 0) {
+        uint32_t num_descrittori_pronti = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
+        if (num_descrittori_pronti == (uint32_t)-1) {
             if (errno == EINTR) {
                 // Errore non fatale: una chiamata di sistema è stata interrotta
                 continue;
@@ -158,38 +151,44 @@ int32_t main(int argc, char * argv[]) {
 
         // Utente chiede di stabilire una connessione TCP
         if (FD_ISSET(socket_lavagna, &descrittori_lettura)) {
-            int32_t socket_utente = accept(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, &addrlen);
-            if (socket_utente < 0) {
+            uint32_t socket_utente = accept(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, &addrlen);
+            if (socket_utente == (uint32_t)-1) {
                 perror("Accept fallita: ");
                 continue;
             }
             
-            // Salva il nuovo socket nell'array per monitorarlo con la select()
-            for (int32_t i = 0; i < MAX_UTENTI; i++) {
-                if (socket_utenti[i] == 0) {
-                    socket_utenti[i] = socket_utente;
-                    break;
-                }
+            // Salva il nuovo utente nella lista per monitorarlo con la select()
+            struct Utente * utente = (struct Utente *)malloc(sizeof(struct Utente));
+            memset((void *)utente, 0, sizeof(struct Utente));
+            utente->socket_utente = socket_utente;
+
+            if (!lista_utenti) {
+                lista_utenti = utente;
+            }
+            else {
+                utente->successivo = lista_utenti;
+                lista_utenti = utente;
             }
         }
 
         // Gestione messaggi dagli utenti (ACK, QUIT, CARD_DONE)
         for (int32_t i = 0; i < MAX_UTENTI; i++) {
-            int32_t sd = socket_utenti[i];
-            if (FD_ISSET(sd, &descrittori_lettura)) {
+            /*int32_t socket_utente = socket_utenti[i];
+            if (FD_ISSET(socket_utente, &descrittori_lettura)) {
                 char buffer[1024] = {0};
-                int bytes_letti = read(sd, buffer, 1024); 
+                int bytes_letti = read(socket_utente, buffer, 1024); 
 
                 if (bytes_letti <= 0) {
                     // L'utente si è disconnesso bruscamente [cite: 42, 81]
-                    close(sd);
+                    // TODO
+                    close(socket_utente);
                     socket_utenti[i] = 0;
                 } else {
                     // Processa comando (es. HELLO, QUIT, CARD_DONE) [cite: 40, 41, 62]
                     // Se HELLO: registra porta e invia HANDLE_CARD 
                     show_lavagna();
                 }
-            }
+            }*/
         }
     }
 

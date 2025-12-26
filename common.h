@@ -40,7 +40,7 @@ struct Messaggio_utente {
     uint16_t porta_utente;
 
     // Payload (usato per ACK_CARD, CARD_DONE, e CREATE_CARD)
-    int32_t id_card;
+    uint16_t id_card;
     
     // Payload (usato per CREATE_CARD)
     enum Colonne colonna;     
