@@ -1,22 +1,6 @@
-#include "common.h"
-
-// Struttura per gli utenti
-struct Utente {
-    uint32_t socket_utente;
-    uint16_t porta_utente;
-    uint16_t attivo;
-    struct Utente * successivo;
-};
-
-// Struttura per la Card
-struct Card {
-    uint16_t id;
-    enum Colonne colonna;
-    char testo[LUNGHEZZA_TESTO];
-    struct Utente utente;
-    time_t ultima_modifica;
-    struct Card * successiva;
-};
+#include "include/common.h"
+#include "include/include_lavagna.h"
+#include "include/protocollo_lavagna.h"
 
 // Stato globale della lavagna
 struct Card * lavagna;
@@ -42,17 +26,17 @@ void show_lavagna() {
         uint16_t colonne_modificate = 0;   
         for (uint16_t num_colonna = 0; num_colonna < NUM_COLONNE; num_colonna++) {
             printf("| ");
+            char testo[LUNGHEZZA_TESTO];
             if (card_inizio_colonna[num_colonna]) {
-                char testo[LUNGHEZZA_TESTO];
                 strcpy(testo, card_inizio_colonna[num_colonna]->testo);
-                for (u_int16_t i = strlen(testo); i < LUNGHEZZA_TESTO - 1; i++) {
-                    testo[i] = ' ';
-                }
-                testo[LUNGHEZZA_TESTO - 1] = '\0';
-                printf("%s", testo);
                 card_inizio_colonna[num_colonna] = card_inizio_colonna[num_colonna]->successiva;
                 colonne_modificate++;
             }
+            for (u_int16_t i = strlen(testo) - 1; i < LUNGHEZZA_TESTO - 1; i++) {
+                testo[i] = ' ';
+            }
+            testo[LUNGHEZZA_TESTO - 1] = '\0';
+            printf("%s", testo);
         }
         printf("|\n");
         // Esce quando non viene appesa nessuna card alla lavagna

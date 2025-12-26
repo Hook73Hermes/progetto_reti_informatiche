@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#include "protocollo_lavagna.h"
+
+// Invia un messaggio generico lavagna -> utente
+// Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
+void invia_messaggio(uint32_t socket_fd, enum Comandi_lavagna_utente comando, struct Card * card, uint16_t * utenti_connessi, uint16_t num_utenti) {
+    struct Messaggio_lavagna_utente msg;
+    memset(&msg, 0, sizeof(msg));
+
+    msg.comando_lavagna = htons((uint16_t)comando);
+
+    if (card != NULL) {
+        msg.id_card = htons(card->id);
+        strncpy(msg.testo, card->testo, LUNGHEZZA_TESTO - 1);
+        msg.testo[LUNGHEZZA_TESTO - 1] = '\0';
+    }
+
+    if (utenti_connessi != NULL && num_utenti > 0) {
+        msg.num_utenti = htons((uint16_t)num_utenti);
+        for (uint16_t i = 0; i < MAX_UTENTI; i++) {
+            msg.lista_porte[i] = htons(utenti_connessi[i]);
+        }
+    }
+
+    if (send(socket_fd, &msg, sizeof(msg), 0) < 0) {
+        perror("Errore nell'invio messaggio Lavagna -> Utente: ");
+    }
+}
+
+// Riceve un messaggio generico utente -> lavagna
+int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_utente_lavagna * msg) {
+    memset(msg, 0, sizeof(struct Messaggio_utente_lavagna));
+
+    int32_t bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_utente_lavagna), 0);
+    if (bytes_letti == 0) {
+        return 0; // Connessione chiusa dall'altra parte
+    }
+    if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_utente_lavagna)) {
+        perror("Errore ricezione messaggio Utente -> Lavagna: ");
+        return -1;
+    }
+
+    msg->comando_utente = ntohs(msg->comando_utente);
+    msg->porta_utente = ntohs(msg->porta_utente);
+    msg->id_card = ntohs(msg->id_card);
+    msg->colonna = ntohs(msg->colonna);
+
+    return bytes_letti;
+}

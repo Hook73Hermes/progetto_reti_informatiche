@@ -6,11 +6,11 @@ CFLAGS = -Wall -Wextra -O2
 all: lavagna utente
 
 # Compilazione Lavagna
-lavagna: lavagna.c common.h
+lavagna: lavagna.c include/common.h include/include_lavagna.h include/protocollo_lavagna.h
 	$(CC) $(CFLAGS) -o lavagna lavagna.c
 
 # Compilazione Utente
-utente: utente.c common.h
+utente: utente.c include/common.h include/include_utente.h include/protocollo_utente.h
 	$(CC) $(CFLAGS) -o utente utente.c
 
 # Pulizia dei file compilati
