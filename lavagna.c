@@ -1,36 +1,26 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
+#include "common.h"
 
-#define PORTA_LAVAGNA 5678
-#define LUNGHEZZA_TESTO 32
-#define MAX_UTENTI 100
-#define NUM_COLONNE 3
-
-// Colonne della lavagna
-enum NomeColonne {
-    TODO,
-    DOING,
-    DONE
+// Struttura per gli utenti
+struct Utente {
+    int32_t socket_utente;
+    uint16_t porta_utente;
+    int32_t attivo;
+    struct Utente * successivo;
 };
 
 // Struttura per la Card
 struct Card {
-    uint32_t id;
-    enum NomeColonne colonna;
+    int32_t id;
+    enum Colonne colonna;
     char testo[LUNGHEZZA_TESTO];
-    uint16_t porta_utente;
+    struct Utente utente;
     time_t ultima_modifica;
     struct Card * successiva;
 };
 
 // Stato globale della lavagna
 struct Card * lavagna;
+struct Utente * primo_utente;
 
 // Utenti connessi identificati dal numero di porta
 uint16_t utenti_connessi[MAX_UTENTI];       
@@ -78,7 +68,7 @@ void handle_card_push(uint32_t socket_utente, int indice_card, int porta_dest) {
     // MOVE_CARD verrà eseguito alla ricezione dell'ACK_CARD [cite: 43, 59, 80]
 }
 
-int main(int argc, char * argv[]) {
+int32_t main(int argc, char * argv[]) {
     int32_t socket_lavagna;                         // File descriptor del socket per le richieste di connessione TCP
     struct sockaddr_in indirizzo_lavagna;           // Indirizzo del server lavagna
     uint32_t addrlen = sizeof(indirizzo_lavagna);   // Lunghezza della struttura in byte
@@ -185,23 +175,23 @@ int main(int argc, char * argv[]) {
 
         // Gestione messaggi dagli utenti (ACK, QUIT, CARD_DONE)
         for (int32_t i = 0; i < MAX_UTENTI; i++) {
-            // int32_t sd = socket_utenti[i];
-            // if (FD_ISSET(sd, &descrittori_lettura)) {
-            //     char buffer[1024] = {0};
-            //     int bytes_letti = read(sd, buffer, 1024); 
+            int32_t sd = socket_utenti[i];
+            if (FD_ISSET(sd, &descrittori_lettura)) {
+                char buffer[1024] = {0};
+                int bytes_letti = read(sd, buffer, 1024); 
 
-            //     if (bytes_letti <= 0) {
-            //         // L'utente si è disconnesso bruscamente [cite: 42, 81]
-            //         close(sd);
-            //         socket_utenti[i] = 0;
-            //     } else {
-            //         // Processa comando (es. HELLO, QUIT, CARD_DONE) [cite: 40, 41, 62]
-            //         // Se HELLO: registra porta e invia HANDLE_CARD 
-            //         show_lavagna();
-            //     }
-            // }
+                if (bytes_letti <= 0) {
+                    // L'utente si è disconnesso bruscamente [cite: 42, 81]
+                    close(sd);
+                    socket_utenti[i] = 0;
+                } else {
+                    // Processa comando (es. HELLO, QUIT, CARD_DONE) [cite: 40, 41, 62]
+                    // Se HELLO: registra porta e invia HANDLE_CARD 
+                    show_lavagna();
+                }
+            }
         }
     }
 
-    return 0;
+    exit(EXIT_SUCCESS);
 }
