@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
 
 #include "common.h"
 #include "gestione_lavagna.h"
@@ -11,6 +14,13 @@
 // Stato globale della lavagna
 extern struct Card * lavagna;
 extern struct Utente * lista_utenti;
+
+// Colonne come stringhe
+const char * stringhe_colonne[NUM_COLONNE] = {
+    [TODO] = "TODO",
+    [DOING] = "DOING",
+    [DONE] = "DONE"
+};
 
 // Stampa a video la lavagna
 void show_lavagna() {
@@ -35,26 +45,29 @@ void show_lavagna() {
         max_altezza = (card_per_colonna[i] > max_altezza) ? card_per_colonna[i] : max_altezza;
     }
 
+    // Variabili utili per la stampa
+    char linea_lunghezza_colonna[LARGHEZZA_DISPLAY_COLONNA + 1] = {0};
+    memset(linea_lunghezza_colonna, '-', LARGHEZZA_DISPLAY_COLONNA);
+    char nome_lavagna[LARGHEZZA_DISPLAY_COLONNA + 1] = {0};
+    sprintf(nome_lavagna, "LAVAGNA %d", PORTA_LAVAGNA);
+    char nomi_colonne[NUM_COLONNE][LARGHEZZA_DISPLAY_COLONNA + 1];
+    for (uint16_t col = 0; col < NUM_COLONNE; col++)
+        strcpy(nomi_colonne[col], stringhe_colonne[col]);
     // Inizio stampa
     printf("\n");
     // Linea superiore
-    printf("+-%-*s-+-%-*s-+-%-*s-+\n", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------");
-    
-    // Titoli Colonne
-    printf("| %-*s | %-*s | %-*s |\n", 
-        LARGHEZZA_DISPLAY_COLONNA, "TO DO", 
-        LARGHEZZA_DISPLAY_COLONNA, "DOING", 
-        LARGHEZZA_DISPLAY_COLONNA, "DONE");
-    
+    printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    // Nome della lavagna
+    printf("| %-*s |\n", LARGHEZZA_DISPLAY_COLONNA * NUM_COLONNE + 3 * (NUM_COLONNE - 1), nome_lavagna);
     // Separatore
-    printf("+-%-*s-+-%-*s-+-%-*s-+\n", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------");
-
+    printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    // Titoli Colonne
+    printf("|");
+    for (uint16_t col = 0; col < NUM_COLONNE; col++)
+        printf(" %-*s |", LARGHEZZA_DISPLAY_COLONNA, nomi_colonne[col]);
+    printf("\n");
+    // Separatore
+    printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
     // Stampa contenuto
     for (int riga = 0; riga < max_altezza; riga++) {
         printf("| ");
@@ -257,7 +270,7 @@ struct Utente * distruggi_utente(struct Utente * utente, struct Utente * precede
 }
 
 // Crea un utente e lo inserisce nella lista
-void crea_utente(uint32_t socket_utente) {
+void crea_utente(int32_t socket_utente) {
     struct Utente * nuovo_utente = malloc(sizeof(struct Utente));
     memset(nuovo_utente, 0, sizeof(struct Utente));
 

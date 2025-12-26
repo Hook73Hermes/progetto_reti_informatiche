@@ -1,13 +1,17 @@
 #include <stdio.h>
-#include <string.h> 
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <errno.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
+#include <sys/select.h>
 
 #include "protocollo_lavagna.h"
 
 // Invia un messaggio generico lavagna -> utente
 // Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
-void invia_messaggio(uint32_t socket_fd, enum Comandi_lavagna_utente comando, struct Card * card, uint16_t * utenti_connessi, uint16_t num_utenti) {
+void invia_messaggio(int32_t socket_fd, enum Comandi_lavagna_utente comando, struct Card * card, uint16_t * utenti_connessi, uint16_t num_utenti) {
     struct Messaggio_lavagna_utente msg;
     memset(&msg, 0, sizeof(msg));
 
@@ -31,7 +35,7 @@ void invia_messaggio(uint32_t socket_fd, enum Comandi_lavagna_utente comando, st
 }
 
 // Riceve un messaggio generico utente -> lavagna
-int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_utente_lavagna * msg) {
+int32_t ricevi_messaggio(int32_t socket_fd, struct Messaggio_utente_lavagna * msg) {
     memset(msg, 0, sizeof(struct Messaggio_utente_lavagna));
 
     int32_t bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_utente_lavagna), 0);

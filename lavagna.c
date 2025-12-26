@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/select.h>
 #include <time.h>
 #include <errno.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
 
 #include "include/common.h"
 #include "include/gestione_lavagna.h"
@@ -16,13 +17,13 @@ struct Card * lavagna;
 struct Utente * lista_utenti;
 
 int32_t main() {
-    uint32_t socket_lavagna;                        // File descriptor del socket per le richieste di connessione TCP
+    int32_t socket_lavagna;                         // File descriptor del socket per le richieste di connessione TCP
     struct sockaddr_in indirizzo_lavagna;           // Indirizzo del server lavagna
     uint32_t addrlen = sizeof(indirizzo_lavagna);   // Lunghezza della struttura in byte
 
     fd_set descrittori_lettura;                     // Set dei descrittori su cui fare polling
-    uint32_t max_socket;                            // Socket con ID massimo
-    struct timeval timeout;                         // Parametro per la accept()
+    int32_t max_socket;                             // Socket con ID massimo
+    struct timeval timeout;                         // Parametro per la select()
 
     // Inizializzazione card
     for (uint16_t i = 1; i <= NUM_CARD_INIZIALI; i++) {
@@ -45,23 +46,20 @@ int32_t main() {
 
     // SO_REUSEADDR permette di riutilizzare immediatamente la porta 5678 dopo la chiusura del server
     int32_t opt = 1;
-    if (setsockopt(socket_lavagna, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+    if (setsockopt(socket_lavagna, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("Setsockopt fallito: ");
-        close(socket_lavagna);
         exit(EXIT_FAILURE);
     }
 
     // Bind del socket all'indirizzo
     if (bind(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, sizeof(indirizzo_lavagna)) < 0) {
         perror("Bind fallito: ");
-        close(socket_lavagna);
         exit(EXIT_FAILURE);
     }
 
     // Socket passivo 
     if (listen(socket_lavagna, 5) < 0) {
         perror("Listen fallita: ");
-        close(socket_lavagna);
         exit(EXIT_FAILURE);
     }
 
@@ -72,7 +70,7 @@ int32_t main() {
 
         // Aggiunge i socket degli utenti già connessi al set e calcola il massimo
         for (struct Utente * utente = lista_utenti; utente; utente = utente->successivo) {
-            uint32_t socket_utente = utente->socket_utente;
+            int32_t socket_utente = utente->socket_utente;
             if (socket_utente > 0) {
                 FD_SET(socket_utente, &descrittori_lettura);
                 max_socket = (socket_utente > max_socket) ? socket_utente : max_socket;
@@ -84,13 +82,11 @@ int32_t main() {
         timeout.tv_usec = 0;
 
         // Polling dei socket
-        uint32_t num_descrittori_pronti = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
-        if (num_descrittori_pronti == (uint32_t)-1) {
+        uint16_t num_descrittori_pronti = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
+        if (num_descrittori_pronti == (uint16_t)-1) {
             if (errno == EINTR) continue; // Errore non fatale: una chiamata di sistema è stata interrotta
-            else { // Errore fatale (es. memoria esaurita o socket non valido)
-                perror("Select fallita con errore fatale: ");
-                exit(EXIT_FAILURE); 
-            }
+            perror("Select fallita con errore fatale: ");
+            exit(EXIT_FAILURE);
         }
 
         // Controlla se bisogna spedire dei ping oppure se bisogna disconnettere degli utenti
@@ -123,7 +119,7 @@ int32_t main() {
 
         // Utente chiede di stabilire una connessione TCP
         if (FD_ISSET(socket_lavagna, &descrittori_lettura)) { // Crea utente o lo inserisce nella lista
-            uint32_t socket_utente = accept(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, &addrlen);
+            int32_t socket_utente = accept(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, &addrlen);
             if (socket_utente > 0) crea_utente(socket_utente);
         }
 
@@ -175,7 +171,7 @@ int32_t main() {
                             break;
 
                         case CMD_QUIT: // Utente finisce di lavorare
-                            disattiva_utente(utente);
+                            distruggi_utente(utente, precedente);
                             break;
                     }
                 }

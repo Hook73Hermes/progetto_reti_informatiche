@@ -1,13 +1,17 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <errno.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
+#include <sys/select.h>
 
 #include "protocollo_utente.h"
 
 // Invia un messaggio generico utente -> lavagna
 // Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
-void invia_messaggio(uint32_t socket_fd, enum Comandi_utente_lavagna comando, uint16_t porta_utente, uint16_t id_card, enum Colonne colonna, char * testo) {
+void invia_messaggio(int32_t socket_fd, enum Comandi_utente_lavagna comando, uint16_t porta_utente, uint16_t id_card, enum Colonne colonna, char * testo) {
     struct Messaggio_utente_lavagna msg;
     memset(&msg, 0, sizeof(msg));
 
@@ -23,7 +27,7 @@ void invia_messaggio(uint32_t socket_fd, enum Comandi_utente_lavagna comando, ui
 }
 
 // Riceve un messaggio generico lavagna -> utente
-int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_lavagna_utente * msg) {
+int32_t ricevi_messaggio(int32_t socket_fd, struct Messaggio_lavagna_utente * msg) {
     memset(msg, 0, sizeof(struct Messaggio_lavagna_utente));
 
     int32_t bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_lavagna_utente), 0);
@@ -32,7 +36,7 @@ int32_t ricevi_messaggio(uint32_t socket_fd, struct Messaggio_lavagna_utente * m
     }
     if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_lavagna_utente)) {
         perror("Errore nella ricezione messaggio Lavagna -> Utente: ");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     msg->comando_lavagna = ntohs(msg->comando_lavagna);
