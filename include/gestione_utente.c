@@ -144,17 +144,18 @@ void esegui_task(struct Messaggio_lavagna_utente * msg) {
 
 // Review P2P
 void esegui_review(struct Messaggio_lavagna_utente * msg) {
-    // Contatta tutti i peer
-    if (msg->num_utenti > 0) {
-        printf(">> Avvio Peer Review con %d utenti...\n", msg->num_utenti);
-        uint16_t lista_porte_allineata[MAX_UTENTI]; // per via di ((packed)) non è detto che la lista in msg sia allineata
-        memcpy(lista_porte_allineata, msg->lista_porte, sizeof(lista_porte_allineata));
-        uint16_t approvazioni = richiedi_review_ai_peer(lista_porte_allineata, msg->num_utenti);
-        printf(">> Review completata. Approvazioni ricevute: %d/%d\n", approvazioni, msg->num_utenti);
-    } else {
-        printf(">> Nessun altro utente online per la review. Auto-approvazione.\n");
+    if (msg->num_utenti == 0) {
+        printf(">> Nessun altro utente online per la review. Attesa....\n");
+        sleep(1);
+        invia_messaggio(socket_lavagna, CMD_REQUEST_USER_LIST, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
+        return;
     }
-
+    // Richiesta di approvazione P2P
+    printf(">> Avvio Peer Review con %d utenti...\n", msg->num_utenti);
+    uint16_t lista_porte_allineata[MAX_UTENTI]; // per via di ((packed)) non è detto che la lista in msg sia allineata
+    memcpy(lista_porte_allineata, msg->lista_porte, sizeof(lista_porte_allineata));
+    uint16_t approvazioni = richiedi_review_ai_peer(lista_porte_allineata, msg->num_utenti);
+    printf(">> Review completata. Approvazioni ricevute: %d/%d\n", approvazioni, msg->num_utenti);
     // Lavoro finito
     invia_messaggio(socket_lavagna, CMD_CARD_DONE, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
     printf(">> DONE inviato. Task %d completato.\n", id_card_in_lavorazione);
