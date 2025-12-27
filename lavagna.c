@@ -123,7 +123,11 @@ int32_t main() {
         // Utente chiede di stabilire una connessione TCP
         if (FD_ISSET(socket_lavagna, &descrittori_lettura)) { // Crea utente o lo inserisce nella lista
             int32_t socket_utente = accept(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, &addrlen);
-            if (socket_utente > 0) crea_utente(socket_utente);
+            if (conta_utenti_connessi() >= MAX_UTENTI) { // Verifico ci sia spazio per altri utenti
+                printf(">> Server pieno: rifiutata connessione a un nuovo utente\n");
+                close(socket_utente); // Chiudiamo subito la porta in faccia
+            } 
+            else crea_utente(socket_utente);
         }
 
         // Gestione messaggi dagli utenti

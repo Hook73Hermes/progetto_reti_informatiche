@@ -10,17 +10,17 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 
-#define PORTA_LAVAGNA 5678
-#define LUNGHEZZA_TESTO 20
-#define MAX_UTENTI 100
+#define PORTA_LAVAGNA 5678                      // Porta del server-lavagna
+#define LUNGHEZZA_TESTO 20                      // Lunghezza massima della descrizione delle attività
+#define MAX_UTENTI 100                          // Numero massimo si
 #define NUM_COLONNE 3
 #define NUM_CARD_INIZIALI 10
 #define MAX_CARD_DISPLAY 100 
 #define LARGHEZZA_DISPLAY_COLONNA 40
 #define DURATA_MINIMA_LAVORO 3
 #define DURATA_MASSIMA_LAVORO 10
-#define TEMPO_PRIMA_DEL_PING 5.0
-#define TEMPO_DI_ATTESA_PONG 5.0
+#define TEMPO_PRIMA_DEL_PING 90.0
+#define TEMPO_DI_ATTESA_PONG 30.0
 
 // Colonne della lavagna
 enum Colonne {

@@ -242,6 +242,17 @@ void invia_lista_utenti(struct Utente * utente) {
     invia_messaggio(utente->socket_utente, CMD_USER_LIST, NULL, porte_utenti, num_utenti);
 }
 
+// Conta quanti utenti sono attualmente nella lista
+uint16_t conta_utenti_connessi() {
+    uint16_t count = 0;
+    struct Utente * utente = lista_utenti;
+    while (utente != NULL) {
+        count++;
+        utente = utente->successivo;
+    }
+    return count;
+}
+
 // Disattiva un utente
 void disattiva_utente(struct Utente * utente) {
     interrompi_lavoro_utente(utente);

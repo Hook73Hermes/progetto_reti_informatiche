@@ -48,6 +48,7 @@ void get_porte_attive(uint16_t * porte_utenti, uint16_t * num_utenti, struct Ute
 uint16_t is_utente_occupato(struct Utente * utente); // 1 se occupato, 0 se libero
 struct Utente * get_utente_libero_min_porta();
 void invia_lista_utenti(struct Utente * utente);
+uint16_t conta_utenti_connessi();
 
 // Operazioni sugli utenti
 void disattiva_utente(struct Utente * utente);
