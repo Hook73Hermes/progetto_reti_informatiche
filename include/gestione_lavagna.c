@@ -53,43 +53,66 @@ void show_lavagna() {
     char nomi_colonne[NUM_COLONNE][LARGHEZZA_DISPLAY_COLONNA + 1];
     for (uint16_t col = 0; col < NUM_COLONNE; col++)
         strcpy(nomi_colonne[col], stringhe_colonne[col]);
+
     // Inizio stampa
     printf("\n");
+
     // Linea superiore
     printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    
     // Nome della lavagna
     printf("| %-*s |\n", LARGHEZZA_DISPLAY_COLONNA * NUM_COLONNE + 3 * (NUM_COLONNE - 1), nome_lavagna);
+    
     // Separatore
     printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    
     // Titoli Colonne
     printf("|");
     for (uint16_t col = 0; col < NUM_COLONNE; col++)
         printf(" %-*s |", LARGHEZZA_DISPLAY_COLONNA, nomi_colonne[col]);
     printf("\n");
+    
     // Separatore
     printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    
     // Stampa contenuto
     for (int riga = 0; riga < max_altezza; riga++) {
         printf("| ");
         for (int col = 0; col < NUM_COLONNE; col++) {
             struct Card * card = colonne_visuali[col][riga];
-            char buffer[LARGHEZZA_DISPLAY_COLONNA + 10]; // Buffer per formattare la singola cella
+            
+            // Buffer finale che verrà stampato (fisso a LARGHEZZA_DISPLAY_COLONNA char + terminatore)
+            char buffer_cella[LARGHEZZA_DISPLAY_COLONNA + 1]; 
+            memset(buffer_cella, 0, sizeof(buffer_cella));
 
-            if (card != NULL) { // Se c'è una card, formattiamo l'output
-                if (col == DOING && card->utente != NULL) // Per DOING mostriamo anche la porta dell'utente
-                    snprintf(buffer, LARGHEZZA_DISPLAY_COLONNA, "[%d] %s (u:%d)", card->id, card->testo, card->utente->porta_utente);
-                else // Per TODO e DONE solo ID e Testo
-                    snprintf(buffer, LARGHEZZA_DISPLAY_COLONNA, "[%d] %s", card->id, card->testo);
+            if (card != NULL) {
+                // 1. Creiamo il testo completo in un buffer temporaneo grande
+                char buffer_temp[512]; // Abbastanza grande per contenere tutto
+                if (col == DOING && card->utente != NULL)
+                    snprintf(buffer_temp, sizeof(buffer_temp), "[%d] %s (u:%d)", card->id, card->testo, card->utente->porta_utente);
+                else
+                    snprintf(buffer_temp, sizeof(buffer_temp), "[%d] %s", card->id, card->testo);
+
+                // 2. Controlliamo se entra nella colonna
+                size_t len = strlen(buffer_temp);
+                if (len > LARGHEZZA_DISPLAY_COLONNA) {
+                    // SE TROPPO LUNGO: Tagliamo e aggiungiamo "..."
+                    // Copiamo i primi LARGHEZZA_DISPLAY_COLONNA - 3 caratteri
+                    strncpy(buffer_cella, buffer_temp, LARGHEZZA_DISPLAY_COLONNA - 3);
+                    buffer_cella[LARGHEZZA_DISPLAY_COLONNA - 3] = '\0'; // Terminatore
+                    strcat(buffer_cella, "..."); // Aggiungiamo i puntini
+                } 
+                else strcpy(buffer_cella, buffer_temp); // SE ENTRA: Copiamo tutto
             } 
-            else // Cella vuota
-                buffer[0] = '\0';
+            else buffer_cella[0] = '\0'; // Cella vuota
 
-            // Stampa la cella con padding a destra (%-*s) per allineare le barre verticali
-            printf("%-*s | ", LARGHEZZA_DISPLAY_COLONNA, buffer);
+            // Stampa la cella con padding a destra per allineare la tabella
+            // Nota: %-*s assicura che occupi sempre 40 spazi
+            printf("%-*s | ", LARGHEZZA_DISPLAY_COLONNA, buffer_cella);
         }
         printf("\n");
     }
-
+    
     // Chiusura tabella
     printf("+-%-*s-+-%-*s-+-%-*s-+\n\n", 
         LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
@@ -161,7 +184,7 @@ uint16_t get_prossimo_card_id_libero() {
 void crea_card(enum Colonne colonna, char * testo) {
     struct Card * nuova_card = (struct Card *)malloc(sizeof(struct Card));
     if (nuova_card == NULL) {
-        perror("Memoria esaurita: ");
+        perror("Memoria esaurita");
         return;
     }
     memset(nuova_card, 0, sizeof(struct Card));

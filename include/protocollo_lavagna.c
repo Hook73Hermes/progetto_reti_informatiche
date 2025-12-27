@@ -30,7 +30,7 @@ void invia_messaggio(int32_t socket_fd, enum Comandi_lavagna_utente comando, str
     }
 
     if (send(socket_fd, &msg, sizeof(msg), 0) < 0) {
-        perror("Errore nell'invio messaggio Lavagna -> Utente: ");
+        perror("Errore nell'invio messaggio Lavagna -> Utente");
     }
 }
 
@@ -43,7 +43,7 @@ int32_t ricevi_messaggio(int32_t socket_fd, struct Messaggio_utente_lavagna * ms
         return 0; // Connessione chiusa dall'altra parte
     }
     if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_utente_lavagna)) {
-        perror("Errore ricezione messaggio Utente -> Lavagna: ");
+        perror("Errore ricezione messaggio Utente -> Lavagna");
         return -1;
     }
 

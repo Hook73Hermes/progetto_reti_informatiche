@@ -25,19 +25,19 @@ int32_t setup_connessione_lavagna() {
     struct sockaddr_in address_lavagna;
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("Socket fallito: ");
+        perror("Socket fallito");
         exit(EXIT_FAILURE);
     }
 
     address_lavagna.sin_family = AF_INET;
     address_lavagna.sin_port = htons(PORTA_LAVAGNA);
     if (inet_pton(AF_INET, "127.0.0.1", &address_lavagna.sin_addr) <= 0) {
-        perror("Indirizzo non valido: ");
+        perror("Indirizzo non valido");
         exit(EXIT_FAILURE);
     }
 
     if (connect(sockfd, (struct sockaddr *)&address_lavagna, sizeof(address_lavagna)) < 0) {
-        perror("Connessione alla Lavagna fallita: ");
+        perror("Connessione alla Lavagna fallita");
         exit(EXIT_FAILURE);
     }
 
@@ -51,12 +51,12 @@ int32_t setup_server_p2p(uint16_t porta) {
     int32_t opt = 1;
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) <= 0) {
-        perror("Socket P2P fallito: ");
+        perror("Socket P2P fallito");
         exit(EXIT_FAILURE);
     }
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("Setsockopt P2P fallito: ");
+        perror("Setsockopt P2P fallito");
         exit(EXIT_FAILURE);
     }
 
@@ -65,12 +65,12 @@ int32_t setup_server_p2p(uint16_t porta) {
     address.sin_port = htons(porta);
 
     if (bind(sockfd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("Bind P2P fallito: ");
+        perror("Bind P2P fallito");
         exit(EXIT_FAILURE);
     }
 
     if (listen(sockfd, 5) < 0) {
-        perror("Listen P2P fallita: ");
+        perror("Listen P2P fallita");
         exit(EXIT_FAILURE);
     }
 
@@ -224,7 +224,7 @@ void gestisci_connessione_p2p_entrante() {
     socklen_t addrlen = sizeof(address);
 
     if ((new_socket = accept(socket_p2p_listen, (struct sockaddr *)&address, &addrlen)) < 0) {
-        perror("Accept P2P error: ");
+        perror("Accept P2P error");
         return;
     }
 

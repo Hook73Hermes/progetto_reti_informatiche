@@ -11,9 +11,9 @@
 #include <sys/select.h>
 
 #define PORTA_LAVAGNA 5678                      // Porta del server-lavagna
-#define LUNGHEZZA_TESTO 20                      // Lunghezza massima della descrizione delle attività
-#define MAX_UTENTI 100                          // Numero massimo si
-#define NUM_COLONNE 3
+#define LUNGHEZZA_TESTO 128                     // Lunghezza massima della descrizione delle attività
+#define MAX_UTENTI 100                          // Numero massimo utenti connessi in contemporanea
+#define NUM_COLONNE 3                           
 #define NUM_CARD_INIZIALI 10
 #define MAX_CARD_DISPLAY 100 
 #define LARGHEZZA_DISPLAY_COLONNA 40

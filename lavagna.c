@@ -40,26 +40,26 @@ int32_t main() {
 
     // Creazione del file descriptor del socket 
     if ((socket_lavagna = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Socket fallito: ");
+        perror("Socket fallito");
         exit(EXIT_FAILURE);
     }
 
     // SO_REUSEADDR permette di riutilizzare immediatamente la porta 5678 dopo la chiusura del server
     int32_t opt = 1;
     if (setsockopt(socket_lavagna, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("Setsockopt fallito: ");
+        perror("Setsockopt fallito");
         exit(EXIT_FAILURE);
     }
 
     // Bind del socket all'indirizzo
     if (bind(socket_lavagna, (struct sockaddr *)&indirizzo_lavagna, sizeof(indirizzo_lavagna)) < 0) {
-        perror("Bind fallito: ");
+        perror("Bind fallito");
         exit(EXIT_FAILURE);
     }
 
     // Socket passivo 
     if (listen(socket_lavagna, 5) < 0) {
-        perror("Listen fallita: ");
+        perror("Listen fallita");
         exit(EXIT_FAILURE);
     }
     printf(">> Server attivo, in attesa di utenti...\n");
@@ -86,7 +86,7 @@ int32_t main() {
         uint16_t num_descrittori_pronti = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
         if (num_descrittori_pronti == (uint16_t)-1) {
             if (errno == EINTR) continue; // Errore non fatale: una chiamata di sistema è stata interrotta
-            perror("Select fallita con errore fatale: ");
+            perror("Select fallita con errore fatale");
             exit(EXIT_FAILURE);
         }
 
