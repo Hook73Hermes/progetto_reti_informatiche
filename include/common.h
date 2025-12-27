@@ -17,6 +17,10 @@
 #define NUM_CARD_INIZIALI 10
 #define MAX_CARD_DISPLAY 100 
 #define LARGHEZZA_DISPLAY_COLONNA 40
+#define DURATA_MINIMA_LAVORO 3
+#define DURATA_MASSIMA_LAVORO 10
+#define TEMPO_PRIMA_DEL_PING 5.0
+#define TEMPO_DI_ATTESA_PONG 5.0
 
 // Colonne della lavagna
 enum Colonne {

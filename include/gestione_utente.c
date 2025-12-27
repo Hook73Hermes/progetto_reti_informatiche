@@ -134,33 +134,28 @@ void esegui_task(struct Messaggio_lavagna_utente * msg) {
     // Conferma di aver preso il lavoro
     id_card_in_lavorazione = msg->id_card;
     invia_messaggio(socket_lavagna, CMD_ACK_CARD, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
-    printf(">> ACK inviato. Inizio lavoro...\n");
 
-    // Simulazione lavoro (Sleep bloccante) e richiesta dei peer a lavoro completato
-    printf(">> Lavoro in corso (simulazione 3s)...\n");
-    sleep(3); 
+    // Simulazione lavoro (blocco compreso tra 3 e 10 secondi) e richiesta dei peer a lavoro completato
+    srand(time(NULL));
+    uint16_t tempo_di_lavoro = (rand() % (DURATA_MASSIMA_LAVORO - DURATA_MINIMA_LAVORO)) + DURATA_MINIMA_LAVORO;
+    sleep(tempo_di_lavoro); 
     invia_messaggio(socket_lavagna, CMD_REQUEST_USER_LIST, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
 }
 
 // Review P2P
 void esegui_review(struct Messaggio_lavagna_utente * msg) {
-    if (msg->num_utenti == 0) {
-        printf(">> Nessun altro utente online per la review. Attesa....\n");
+    if (msg->num_utenti == 0) { // Ogni secondo verifica se sono arrivati altri utenti
         sleep(1);
         invia_messaggio(socket_lavagna, CMD_REQUEST_USER_LIST, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
         return;
     }
     // Richiesta di approvazione P2P
-    printf(">> Avvio Peer Review con %d utenti...\n", msg->num_utenti);
     uint16_t lista_porte_allineata[MAX_UTENTI]; // per via di ((packed)) non è detto che la lista in msg sia allineata
     memcpy(lista_porte_allineata, msg->lista_porte, sizeof(lista_porte_allineata));
-    uint16_t approvazioni = richiedi_review_ai_peer(lista_porte_allineata, msg->num_utenti);
-    printf(">> Review completata. Approvazioni ricevute: %d/%d\n", approvazioni, msg->num_utenti);
+    richiedi_review_ai_peer(lista_porte_allineata, msg->num_utenti);
     // Lavoro finito
     invia_messaggio(socket_lavagna, CMD_CARD_DONE, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
-    printf(">> DONE inviato. Task %d completato.\n", id_card_in_lavorazione);
     id_card_in_lavorazione = 0;
-    printf("In attesa di nuovi task...\n");
 }
 
 // Contatta gli altri peer per chiedere una review
@@ -209,18 +204,14 @@ uint16_t richiedi_review_ai_peer(uint16_t * lista_porte, uint16_t num_utenti) {
                             if (bytes > 0) {
                                 buffer[bytes] = '\0';
                                 if (strcmp(buffer, "OK") == 0) approvazioni++;
-                                printf("    -> Peer %d: Approvato.\n", porta_target);
                             }
                             ricevuto = 1; // Esco dal while interno
                         }
-                    } else { // Timeout scaduto, passo al prossimo peer
-                        printf("    -> Peer %d: Timeout, non approvato.\n", porta_target);
-                        ricevuto = 1;
-                    }
+                    } 
+                    else ricevuto = 1; // Timeout scaduto, passo al prossimo peer
                 }
             }
         } 
-        else printf("    -> Peer %d: Irraggiungibile, non approvato.\n", porta_target);
         close(socket_peer);
     }
     return approvazioni;

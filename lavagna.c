@@ -62,6 +62,7 @@ int32_t main() {
         perror("Listen fallita: ");
         exit(EXIT_FAILURE);
     }
+    printf(">> Server attivo, in attesa di utenti...\n");
 
     while (1) {
         FD_ZERO(&descrittori_lettura);
@@ -94,19 +95,21 @@ int32_t main() {
         struct Card * card = lavagna;
         while (card != NULL) {
             if (card->colonna == DOING && card->utente != NULL) {
-                if (difftime(now, card->ultima_modifica) > 90.0) { // Card in doing da oltre 90 secondi
+                if (difftime(now, card->ultima_modifica) > TEMPO_PRIMA_DEL_PING) { // Card in doing da oltre 90 secondi
                     struct Utente * utente_sospetto = card->utente;
                     if (utente_sospetto->tempo_invio_ping == 0) { // Invia il ping se non fosse già stato inviato
+                        printf(">> Invio ping all'utente %d. In attesa di risposta...\n", utente_sospetto->porta_utente);
                         invia_messaggio(utente_sospetto->socket_utente, CMD_PING, NULL, NULL, 0);
                         utente_sospetto->tempo_invio_ping = now; 
                     }
-                    else if (difftime(now, utente_sospetto->tempo_invio_ping) > 30.0) { // Distruzione dell'utente
+                    else if (difftime(now, utente_sospetto->tempo_invio_ping) > TEMPO_DI_ATTESA_PONG) { // Distruzione dell'utente
                         struct Utente * utente = lista_utenti;
                         struct Utente * precedente = NULL;
                         while(utente != NULL && utente != utente_sospetto) {
                             precedente = utente;
                             utente = utente->successivo;
                         }
+                        printf(">> L'utente %d non risponde. Disconnesso\n", utente_sospetto->porta_utente);
                         FD_CLR(utente_sospetto->socket_utente, &descrittori_lettura);
                         distruggi_utente(utente_sospetto, precedente);
                         assegna_card(NULL);
@@ -133,6 +136,7 @@ int32_t main() {
                 int32_t bytes_letti = ricevi_messaggio(utente->socket_utente, &msg);
 
                 if (bytes_letti <= 0) { // Utente disconnesso
+                    printf(">> Utente %d disconnesso\n", utente->porta_utente);
                     utente = distruggi_utente(utente, precedente);
                     assegna_card(NULL); 
                     show_lavagna();
@@ -141,11 +145,13 @@ int32_t main() {
                 else { // Gestione comandi
                     switch (msg.comando_utente) {
                         case CMD_HELLO: // Utente inizia a lavorare
+                            printf(">> Utente %d connesso\n", msg.porta_utente);
                             attiva_utente(utente, msg.porta_utente);
                             assegna_card(utente);
                             break;
 
                         case CMD_ACK_CARD: // Utente conferma presa in carico
+                            printf(">> Lavoro %d preso in carico dall'utente %d\n", msg.id_card, utente->porta_utente);
                             sposta_card(msg.id_card, DOING, utente);
                             show_lavagna();
                             break;
@@ -155,6 +161,7 @@ int32_t main() {
                             break;
 
                         case CMD_CARD_DONE: // Utente ha finito, sposta card in DONE e assegna nuova card
+                            printf(">> Lavoro %d completato dall'utente %d\n", msg.id_card, utente->porta_utente);
                             sposta_card(msg.id_card, DONE, NULL);
                             assegna_card(utente);
                             show_lavagna();
@@ -167,10 +174,12 @@ int32_t main() {
                             break;
 
                         case CMD_PONG_LAVAGNA:
+                            printf(">> L'utente %d ha risposto al ping\n", utente->porta_utente);
                             resetta_timer_lavoro_utente(utente);
                             break;
 
                         case CMD_QUIT: // Utente finisce di lavorare
+                            printf(">> Utente %d disconnesso\n", utente->porta_utente);
                             distruggi_utente(utente, precedente);
                             break;
                     }
