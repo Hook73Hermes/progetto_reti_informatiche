@@ -11,6 +11,8 @@
 
 // Invia un messaggio generico utente -> lavagna
 // Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
+// I campi vengono semplicemente copiati in una struttura messaggio
+// I campi interi vengono portati in endianness della rete
 void invia_messaggio(int32_t socket_fd, enum Comandi_utente_lavagna comando, uint16_t porta_utente, uint16_t id_card, enum Colonne colonna, char * testo) {
     struct Messaggio_utente_lavagna msg;
     memset(&msg, 0, sizeof(msg));
@@ -21,20 +23,26 @@ void invia_messaggio(int32_t socket_fd, enum Comandi_utente_lavagna comando, uin
     msg.colonna = htons((uint16_t)colonna);
     if (testo != NULL) snprintf(msg.testo, LUNGHEZZA_TESTO, "%s", testo);
 
+    // Invio del messaggio utilizzando il socket
     if (send(socket_fd, &msg, sizeof(msg), 0) < 0) {
         perror("Errore invio messaggio Utente -> Lavagna");
     }
 }
 
 // Riceve un messaggio generico lavagna -> utente
+// Restituisce il numero di bytes letti, 0 se il socket è stato chiuso dall'altra parte e -1 in caso di errori
+// I campi del messaggio in ingresso vengono semplicemente copiati in una struttura messaggio passata tramite puntatore
+// I campi interi vengono portati in endianness dell'architettura
 int32_t ricevi_messaggio(int32_t socket_fd, struct Messaggio_lavagna_utente * msg) {
     memset(msg, 0, sizeof(struct Messaggio_lavagna_utente));
 
     int32_t bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_lavagna_utente), 0);
     if (bytes_letti == 0) {
-        return 0; // Connessione chiusa dall'altra parte
+        // Connessione chiusa dall'altra parte
+        return 0; 
     }
     if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_lavagna_utente)) {
+        // Errore durante la ricezione
         perror("Errore nella ricezione messaggio Lavagna -> Utente");
         return -1;
     }

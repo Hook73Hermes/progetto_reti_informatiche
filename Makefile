@@ -6,11 +6,11 @@ CFLAGS = -Wall
 all: lavagna utente
 
 # Compilazione lavagna
-lavagna: lavagna.c include/common.h include/*_lavagna.[hc]
+lavagna: lavagna.c include/common.h include/*_lavagna.[h,c]
 	$(CC) $(CFLAGS) -o lavagna lavagna.c include/common.h include/*_lavagna.c
 
 # Compilazione utente
-utente: utente.c include/common.h include/*_utente.[hc]
+utente: utente.c include/common.h include/*_utente.[h,c]
 	$(CC) $(CFLAGS) -o utente utente.c include/common.h include/*_utente.c
 
 # Pulizia dei file compilati
