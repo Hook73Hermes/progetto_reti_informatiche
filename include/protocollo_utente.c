@@ -13,13 +13,13 @@
 // Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
 // I campi vengono semplicemente copiati in una struttura messaggio
 // I campi interi vengono portati in endianness della rete
-void invia_messaggio(int32_t socket_fd, enum Comandi_utente_lavagna comando, uint16_t porta_utente, uint16_t id_card, enum Colonne colonna, char * testo) {
+void invia_messaggio(int socket_fd, enum Comandi_utente_lavagna comando, int porta_utente, int id_card, enum Colonne colonna, char * testo) {
     struct Messaggio_utente_lavagna msg;
     memset(&msg, 0, sizeof(msg));
 
     msg.comando_utente = htons((uint16_t)comando);
-    msg.porta_utente = htons(porta_utente);
-    msg.id_card = htons(id_card);
+    msg.porta_utente = htons((uint16_t)porta_utente);
+    msg.id_card = htons((uint16_t)id_card);
     msg.colonna = htons((uint16_t)colonna);
     if (testo != NULL) snprintf(msg.testo, LUNGHEZZA_TESTO, "%s", testo);
 
@@ -33,10 +33,10 @@ void invia_messaggio(int32_t socket_fd, enum Comandi_utente_lavagna comando, uin
 // Restituisce il numero di bytes letti, 0 se il socket è stato chiuso dall'altra parte e -1 in caso di errori
 // I campi del messaggio in ingresso vengono semplicemente copiati in una struttura messaggio passata tramite puntatore
 // I campi interi vengono portati in endianness dell'architettura
-int32_t ricevi_messaggio(int32_t socket_fd, struct Messaggio_lavagna_utente * msg) {
+int ricevi_messaggio(int socket_fd, struct Messaggio_lavagna_utente * msg) {
     memset(msg, 0, sizeof(struct Messaggio_lavagna_utente));
 
-    int32_t bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_lavagna_utente), 0);
+    int bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_lavagna_utente), 0);
     if (bytes_letti == 0) {
         // Connessione chiusa dall'altra parte
         return 0; 
@@ -50,7 +50,7 @@ int32_t ricevi_messaggio(int32_t socket_fd, struct Messaggio_lavagna_utente * ms
     msg->comando_lavagna = ntohs(msg->comando_lavagna);
     msg->id_card = ntohs(msg->id_card);
     msg->num_utenti = ntohs(msg->num_utenti);
-    for (uint16_t i = 0; i < MAX_UTENTI; i++) {
+    for (int i = 0; i < MAX_UTENTI; i++) {
         msg->lista_porte[i] = ntohs(msg->lista_porte[i]);
     }
 

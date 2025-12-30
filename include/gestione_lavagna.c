@@ -26,7 +26,7 @@ const char * stringhe_colonne[NUM_COLONNE] = {
 void show_lavagna() {
     // Strutture temporanee per organizzare la visualizzazione
     struct Card * colonne_visuali[NUM_COLONNE][MAX_CARD_DISPLAY];
-    uint16_t card_per_colonna[NUM_COLONNE] = {0};
+    int card_per_colonna[NUM_COLONNE] = {0};
     memset(colonne_visuali, 0, sizeof(colonne_visuali));
 
     // Scorre la lista una sola volta e inserisce le card nella colonna giusta
@@ -40,8 +40,8 @@ void show_lavagna() {
     }
 
     // Calcola altezza lavagna
-    uint16_t max_altezza = 0;
-    for (uint16_t i = 0; i < NUM_COLONNE; i++) {
+    int max_altezza = 0;
+    for (int i = 0; i < NUM_COLONNE; i++) {
         max_altezza = (card_per_colonna[i] > max_altezza) ? card_per_colonna[i] : max_altezza;
     }
 
@@ -53,7 +53,7 @@ void show_lavagna() {
     sprintf(nome_lavagna, "LAVAGNA %d", PORTA_LAVAGNA);
     // Stringa con i nomi delle colonne
     char nomi_colonne[NUM_COLONNE][LARGHEZZA_DISPLAY_COLONNA + 1];
-    for (uint16_t col = 0; col < NUM_COLONNE; col++)
+    for (int col = 0; col < NUM_COLONNE; col++)
         strcpy(nomi_colonne[col], stringhe_colonne[col]);
 
     // Inizio stampa
@@ -70,7 +70,7 @@ void show_lavagna() {
     
     // Titoli Colonne
     printf("|");
-    for (uint16_t col = 0; col < NUM_COLONNE; col++)
+    for (int col = 0; col < NUM_COLONNE; col++)
         printf(" %-*s |", LARGHEZZA_DISPLAY_COLONNA, nomi_colonne[col]);
     printf("\n");
     
@@ -139,7 +139,7 @@ struct Card * get_card_todo() {
 }
 
 // Trova una card per id, la sposta in una nuova colonna e le assegna un utente
-void sposta_card(uint16_t id, enum Colonne nuova_colonna, struct Utente * nuovo_utente) {
+void sposta_card(int id, enum Colonne nuova_colonna, struct Utente * nuovo_utente) {
     struct Card * card = lavagna;
     while (card != NULL) {
         if (card->id == id) {
@@ -153,7 +153,7 @@ void sposta_card(uint16_t id, enum Colonne nuova_colonna, struct Utente * nuovo_
 }
 
 // Genera un'array con tutte le le porte degli utenti attivi (hanno già inviato HELLO)
-void get_porte_attive(uint16_t * porte_utenti, uint16_t * num_utenti, struct Utente * utente_richiedente) {
+void get_porte_attive(int * porte_utenti, int * num_utenti, struct Utente * utente_richiedente) {
     *num_utenti = 0;
     struct Utente * utente = lista_utenti;
     while (utente != NULL && *num_utenti < MAX_UTENTI) {
@@ -171,8 +171,8 @@ void assegna_card(struct Utente * utente) {
     struct Card * card = get_card_todo();
     if (utente != NULL && card != NULL) {
         card->utente = utente;
-        uint16_t porte_utenti[MAX_UTENTI];
-        uint16_t num_utenti;
+        int porte_utenti[MAX_UTENTI];
+        int num_utenti;
         get_porte_attive(porte_utenti, &num_utenti, utente);
         // Invia CMD_HANDLE_CARD all'utente che prende in carica la card
         invia_messaggio(utente->socket_utente, CMD_HANDLE_CARD, card, porte_utenti, num_utenti);
@@ -180,8 +180,8 @@ void assegna_card(struct Utente * utente) {
 }
 
 // Restituisce il primo id per card libero
-uint16_t get_prossimo_card_id_libero() {
-    uint16_t id = 1;
+int get_prossimo_card_id_libero() {
+    int id = 1;
     struct Card * card = lavagna;
     while (card != NULL) {
         id = (card->id >= id) ? card->id + 1 : id;
@@ -247,7 +247,7 @@ void interrompi_lavoro_utente(struct Utente * utente) {
 }
 
 // Controlla se un utente sta lavorando su una card (1 = occupato, 0 = libero)
-uint16_t is_utente_occupato(struct Utente * utente) {
+int is_utente_occupato(struct Utente * utente) {
     struct Card * card = lavagna;
     while (card != NULL) {
         if (card->colonna == DOING && card->utente == utente) {
@@ -275,16 +275,16 @@ struct Utente * get_utente_libero_min_porta() {
 
 // Invia lista utenti a un utente
 void invia_lista_utenti(struct Utente * utente) {
-    uint16_t porte_utenti[MAX_UTENTI];
-    uint16_t num_utenti;
+    int porte_utenti[MAX_UTENTI];
+    int num_utenti;
     get_porte_attive(porte_utenti, &num_utenti, utente);
     // Invia CMD_USER_LIST all'utente giusto
     invia_messaggio(utente->socket_utente, CMD_USER_LIST, NULL, porte_utenti, num_utenti);
 }
 
 // Conta quanti utenti sono attualmente nella lista
-uint16_t conta_utenti_connessi() {
-    uint16_t count = 0;
+int conta_utenti_connessi() {
+    int count = 0;
     struct Utente * utente = lista_utenti;
     while (utente != NULL) {
         count++;
@@ -302,7 +302,7 @@ void disattiva_utente(struct Utente * utente) {
 }
 
 // Attiva un utente 
-void attiva_utente(struct Utente * utente, uint16_t porta_utente) {
+void attiva_utente(struct Utente * utente, int porta_utente) {
     utente->porta_utente = porta_utente;
     utente->attivo = 1;
 }
@@ -323,7 +323,7 @@ struct Utente * distruggi_utente(struct Utente * utente, struct Utente * precede
 }
 
 // Crea un utente e lo inserisce nella lista
-void crea_utente(int32_t socket_utente) {
+void crea_utente(int socket_utente) {
     struct Utente * nuovo_utente = malloc(sizeof(struct Utente));
     memset(nuovo_utente, 0, sizeof(struct Utente));
 

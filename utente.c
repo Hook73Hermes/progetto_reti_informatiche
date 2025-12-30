@@ -13,9 +13,9 @@
 #include "include/protocollo_utente.h"
 
 // Variabili globali dell'utente
-uint16_t mia_porta_p2p;                                     // Numero di porta per il review P2P
-int32_t socket_p2p_listen;                                  // File descriptor del socket in ascolto verso i peer
-int32_t socket_lavagna;                                     // File descriptor del socket verso la lavagna
+int mia_porta_p2p;                                      // Numero di porta per il review P2P
+int socket_p2p_listen;                                  // File descriptor del socket in ascolto verso i peer
+int socket_lavagna;                                     // File descriptor del socket verso la lavagna
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     // Verifica che la porta passata dall'utente sia un intero di valore ammissibile
     char *endptr;
-    int64_t porta_long = strtol(argv[1], &endptr, 10);
+    long porta_long = strtol(argv[1], &endptr, 10);
 
     // *endptr != '\0' significa che ci sono caratteri non numerici
     // La porta deve essere maggiore di PORTA_LAVAGNA e deve poter essere rappresentata su 16 bit
@@ -36,12 +36,12 @@ int main(int argc, char *argv[]) {
     }
 
     // Assegnamento valori alle variabili globali dell'utente
-    mia_porta_p2p = (uint16_t)porta_long;                   
+    mia_porta_p2p = porta_long;                   
     socket_p2p_listen = setup_server_p2p(mia_porta_p2p);
     socket_lavagna = setup_connessione_lavagna();
 
-    fd_set descrittori_lettura;                             // Set dei descrittori su cui fare polling
-    int32_t max_socket;                                     // Socket con id massimo 
+    fd_set descrittori_lettura;                         // Set dei descrittori su cui fare polling
+    int max_socket;                                     // Socket con id massimo 
 
     // Handshake con la lavagna
     invia_messaggio(socket_lavagna, CMD_HELLO, mia_porta_p2p, 0, 0, NULL);

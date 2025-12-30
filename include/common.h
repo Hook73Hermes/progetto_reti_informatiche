@@ -68,6 +68,6 @@ struct Messaggio_utente_lavagna {
     uint16_t id_card; // Id della card
     uint16_t colonna; // Valore da enum Colonne
     char testo[LUNGHEZZA_TESTO]; // Descrizione attività
-} __attribute__((packed));      // niente padding
+} __attribute__((packed)); // niente padding
 
 #endif

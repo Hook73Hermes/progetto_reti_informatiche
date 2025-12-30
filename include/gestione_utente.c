@@ -12,14 +12,14 @@
 #include "protocollo_utente.h"
 
 // Variabili globali dell'utente
-extern uint16_t mia_porta_p2p;                              // Numero di porta per il review P2P
-extern int32_t socket_p2p_listen;                           // File descriptor del socket in ascolto verso i peer
-extern int32_t socket_lavagna;                              // File descriptor del socket verso la lavagna
-uint16_t id_card_in_lavorazione;                            // Card attualemente in lavorazione da parte dell'utente
+extern int mia_porta_p2p;                           // Numero di porta per il review P2P
+extern int socket_p2p_listen;                       // File descriptor del socket in ascolto verso i peer
+extern int socket_lavagna;                          // File descriptor del socket verso la lavagna
+int id_card_in_lavorazione;                         // Card attualemente in lavorazione da parte dell'utente
 
 // Stabilisce la connessione TCP con il server Lavagna: restituisce il file descriptor del socket
-int32_t setup_connessione_lavagna() {
-    int32_t sockfd;
+int setup_connessione_lavagna() {
+    int sockfd;
     struct sockaddr_in address_lavagna;
 
     // Creazione del file descriptor del socket
@@ -46,10 +46,10 @@ int32_t setup_connessione_lavagna() {
 }
 
 // Prepara il socket in ascolto per le connessioni P2P: restituisce il file descriptor del socket di ascolto
-int32_t setup_server_p2p(uint16_t porta) {
-    int32_t sockfd;
+int setup_server_p2p(int porta) {
+    int sockfd;
     struct sockaddr_in address;
-    int32_t opt = 1;
+    int opt = 1;
 
     // Creazione del file desriptor del socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) <= 0) {
@@ -88,7 +88,7 @@ void gestisci_input_tastiera() {
     char buffer[DIM_BUFFER];
     memset(buffer, 0, sizeof(buffer));
     
-    int32_t bytes_letti = read(STDIN_FILENO, buffer, DIM_BUFFER - 1);
+    int bytes_letti = read(STDIN_FILENO, buffer, DIM_BUFFER - 1);
     if (bytes_letti > 0) {
         buffer[bytes_letti - 1] = '\0';
 
@@ -119,9 +119,9 @@ void gestisci_input_tastiera() {
 }
 
 // Gestisce i messaggi in arrivo dalla Lavagna
-int32_t gestisci_messaggio_lavagna() {
+int gestisci_messaggio_lavagna() {
     struct Messaggio_lavagna_utente msg;
-    int32_t bytes_letti = ricevi_messaggio(socket_lavagna, &msg);
+    int bytes_letti = ricevi_messaggio(socket_lavagna, &msg);
     
     if (bytes_letti <= 0 || bytes_letti != sizeof(struct Messaggio_lavagna_utente)) {
         // Errore in lettura oppure lavagna ha chiuso il socket 
@@ -156,7 +156,7 @@ void esegui_task(struct Messaggio_lavagna_utente * msg) {
 
     // Simulazione lavoro (blocco compreso tra DURATA_MINIMA_LAVORO e DURATA_MASSIMA_LAVORO secondi)
     srand(time(NULL));
-    uint16_t tempo_di_lavoro = (rand() % (DURATA_MASSIMA_LAVORO - DURATA_MINIMA_LAVORO)) + DURATA_MINIMA_LAVORO;
+    int tempo_di_lavoro = (rand() % (DURATA_MASSIMA_LAVORO - DURATA_MINIMA_LAVORO)) + DURATA_MINIMA_LAVORO;
     sleep(tempo_di_lavoro); 
     // Richiesta di review ai peer a lavoro completato
     invia_messaggio(socket_lavagna, CMD_REQUEST_USER_LIST, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
@@ -174,8 +174,10 @@ void esegui_review(struct Messaggio_lavagna_utente * msg) {
 
     // Richiesta di approvazione P2P
     // per via di ((packed)) non è detto che la lista in msg sia allineata: deve essere copiata su un buffer locale
-    uint16_t lista_porte_allineata[MAX_UTENTI]; 
-    memcpy(lista_porte_allineata, msg->lista_porte, sizeof(lista_porte_allineata));
+    int lista_porte_allineata[MAX_UTENTI]; 
+    for (int i = 0; i < MAX_UTENTI; i++) {
+        lista_porte_allineata[i] = msg->lista_porte[i];
+    }
     richiedi_review_ai_peer(lista_porte_allineata, msg->num_utenti);
     // Invia CMD_CARD_DONE alla lavagna
     invia_messaggio(socket_lavagna, CMD_CARD_DONE, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
@@ -184,13 +186,13 @@ void esegui_review(struct Messaggio_lavagna_utente * msg) {
 
 // Contatta gli altri peer per chiedere una review
 // Ritorna il numero di review positive ricevute
-uint16_t richiedi_review_ai_peer(uint16_t * lista_porte, uint16_t num_utenti) {
-    uint16_t approvazioni = 0;
-    for (uint16_t i = 0; i < num_utenti; i++) {
-        uint16_t porta_target = lista_porte[i];
+int richiedi_review_ai_peer(int * lista_porte, int num_utenti) {
+    int approvazioni = 0;
+    for (int i = 0; i < num_utenti; i++) {
+        int porta_target = lista_porte[i];
         
         // Setup socket temporaneo verso il peer
-        int32_t socket_peer = socket(AF_INET, SOCK_STREAM, 0);
+        int socket_peer = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_peer <= 0) continue;
 
         // Indirizzo del peer a cui chiedere la review
@@ -209,16 +211,16 @@ uint16_t richiedi_review_ai_peer(uint16_t * lista_porte, uint16_t num_utenti) {
             char req[] = "REV";
             if (send(socket_peer, req, sizeof(req), 0) > 0) {
                 // Invio della richiesta di review "REV" completato con successo
-                int32_t ricevuto = 0;
+                int ricevuto = 0;
                 while (!ricevuto) {
                     fd_set descrittori_lettura; // Set dei descrittori dei socket per la lettura
                     FD_ZERO(&descrittori_lettura); // Svuotamento del set
                     FD_SET(socket_peer, &descrittori_lettura); // Canale dove aspetto "OK"
                     FD_SET(socket_p2p_listen, &descrittori_lettura); // Canale dove arrivano le richieste altrui
-                    int32_t max_socket = (socket_peer > socket_p2p_listen) ? socket_peer : socket_p2p_listen;
+                    int max_socket = (socket_peer > socket_p2p_listen) ? socket_peer : socket_p2p_listen;
                     
                     struct timeval timeout = {2, 0}; // Timeout nel caso il peer si disconnetta
-                    int32_t attivita = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
+                    int attivita = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
 
                     if (attivita > 0) {
                         // Qualcuno (magari chi sta aspettando) vuole una review
@@ -229,7 +231,7 @@ uint16_t richiedi_review_ai_peer(uint16_t * lista_porte, uint16_t num_utenti) {
                         if (FD_ISSET(socket_peer, &descrittori_lettura)) {
                             // È arrivata la risposta che l'utente aspettava
                             char buffer[DIM_BUFFER];
-                            int32_t bytes = recv(socket_peer, buffer, sizeof(buffer), 0);
+                            int bytes = recv(socket_peer, buffer, sizeof(buffer), 0);
                             if (bytes > 0) {
                                 buffer[bytes] = '\0';
                                 if (strcmp(buffer, "OK") == 0) approvazioni++;
@@ -248,7 +250,7 @@ uint16_t richiedi_review_ai_peer(uint16_t * lista_porte, uint16_t num_utenti) {
 
 // Gestisce una richiesta di connessione da parte di un altro peer (Server P2P)
 void gestisci_connessione_p2p_entrante() {
-    int32_t new_socket;
+    int new_socket;
     struct sockaddr_in address;
     socklen_t addrlen = sizeof(address);
 
@@ -260,7 +262,7 @@ void gestisci_connessione_p2p_entrante() {
 
     // Gestione veloce della richiesta: viene sempre accettata
     char buffer[DIM_BUFFER] = {0};
-    int32_t bytes_letti = recv(new_socket, buffer, DIM_BUFFER - 1, 0);
+    int bytes_letti = recv(new_socket, buffer, DIM_BUFFER - 1, 0);
     if (bytes_letti > 0) {
         buffer[bytes_letti] = '\0';
         if (strcmp(buffer, "REV") == 0) {
