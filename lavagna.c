@@ -171,7 +171,7 @@ int main() {
                         case CMD_HELLO: // Utente inizia a lavorare
                             printf(">> Utente %d connesso\n", msg.porta_utente);
                             attiva_utente(utente, msg.porta_utente);
-                            assegna_card(utente);
+                            assegna_card(NULL);
                             break;
 
                         case CMD_ACK_CARD: // Utente conferma presa in carico
@@ -187,7 +187,7 @@ int main() {
                         case CMD_CARD_DONE: // Utente ha finito, sposta card in DONE e assegna nuova card
                             printf(">> Lavoro %d completato dall'utente %d\n", msg.id_card, utente->porta_utente);
                             sposta_card(msg.id_card, DONE, NULL);
-                            assegna_card(utente);
+                            assegna_card(NULL);
                             show_lavagna();
                             break;
                             
