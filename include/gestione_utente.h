@@ -14,8 +14,8 @@
 
 #define DIM_BUFFER 1024                         // Dimensione di buffer di utilità per le operaizioni di I/O
 // Variabili per simulare il lavoro da parte dei client: il lavoro durerà unn numero di secondi casuale
-#define DURATA_MINIMA_LAVORO 1                  // Durata minima dei lavori 
-#define DURATA_MASSIMA_LAVORO 2                // Durata massima dei lavori
+#define DURATA_MINIMA_LAVORO 3                  // Durata minima dei lavori 
+#define DURATA_MASSIMA_LAVORO 10                // Durata massima dei lavori
 
 // Setup Rete
 int setup_connessione_lavagna(); // Restituisce il file descriptor del socket verso la lavagna

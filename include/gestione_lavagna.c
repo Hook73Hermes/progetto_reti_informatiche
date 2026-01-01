@@ -122,7 +122,7 @@ void show_lavagna() {
     }
     
     // Chiusura tabella
-    printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    printf("+-%s-+-%s-+-%s-+\n\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
 }
 
 // Cerca una card in TODO e restituisce il puntatore (o NULL)
