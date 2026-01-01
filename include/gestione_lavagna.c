@@ -122,10 +122,7 @@ void show_lavagna() {
     }
     
     // Chiusura tabella
-    printf("+-%-*s-+-%-*s-+-%-*s-+\n\n", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------", 
-        LARGHEZZA_DISPLAY_COLONNA, "----------------------------------------");
+    printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
 }
 
 // Cerca una card in TODO e restituisce il puntatore (o NULL)
@@ -250,7 +247,7 @@ void interrompi_lavoro_utente(struct Utente * utente) {
 int is_utente_occupato(struct Utente * utente) {
     struct Card * card = lavagna;
     while (card != NULL) {
-        if (card->colonna == DOING && card->utente == utente) {
+        if (card->colonna != DONE && card->utente == utente) {
             // L'utente sta lavorando su una card
             return 1;
         }

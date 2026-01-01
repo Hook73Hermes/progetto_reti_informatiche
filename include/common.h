@@ -16,7 +16,7 @@
 #define NUM_COLONNE 3                           // Numeri di stati in cui possono trovarsi le card       
 #define NUM_CARD_INIZIALI 10                    // Numero di card create all'inizio dalla lavagna
 #define MAX_CARD_DISPLAY 100                    // Numero massimo di card per colonna che vengono mostrate a video
-#define LARGHEZZA_DISPLAY_COLONNA 40            // Larghezza della colonna quando viene mostrata a video
+#define LARGHEZZA_DISPLAY_COLONNA 35            // Larghezza della colonna quando viene mostrata a video
 #define TEMPO_PRIMA_DEL_PING 90.0               // Tempo di lavoro prima che lavagna invii ping
 #define TEMPO_DI_ATTESA_PONG 30.0               // Attesa massima del pong dopo il ping prima che l'utente venga disconnesso 
 

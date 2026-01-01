@@ -181,7 +181,6 @@ void esegui_review(struct Messaggio_lavagna_utente * msg) {
     richiedi_review_ai_peer(lista_porte_allineata, msg->num_utenti);
     // Invia CMD_CARD_DONE alla lavagna
     invia_messaggio(socket_lavagna, CMD_CARD_DONE, mia_porta_p2p, id_card_in_lavorazione, 0, NULL);
-    id_card_in_lavorazione = 0;
 }
 
 // Contatta gli altri peer per chiedere una review
@@ -223,7 +222,7 @@ int richiedi_review_ai_peer(int * lista_porte, int num_utenti) {
                     int attivita = select(max_socket + 1, &descrittori_lettura, NULL, NULL, &timeout);
 
                     if (attivita > 0) {
-                        // Qualcuno (magari chi sta aspettando) vuole una review
+                        // La select ha riscontrato dei file descriptor pronti
                         if (FD_ISSET(socket_p2p_listen, &descrittori_lettura)) {
                             // Gestisce la richiesta entrante per sbloccare l'altro utente
                             gestisci_connessione_p2p_entrante();
