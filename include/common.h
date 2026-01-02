@@ -18,7 +18,11 @@
 #define MAX_CARD_DISPLAY 100                    // Numero massimo di card per colonna che vengono mostrate a video
 #define LARGHEZZA_DISPLAY_COLONNA 35            // Larghezza della colonna quando viene mostrata a video
 #define TEMPO_PRIMA_DEL_PING 90.0               // Tempo di lavoro prima che lavagna invii ping
-#define TEMPO_DI_ATTESA_PONG 30.0               // Attesa massima del pong dopo il ping prima che l'utente venga disconnesso 
+#define TEMPO_DI_ATTESA_PONG 30.0               // Attesa massima del pong dopo il ping prima che l'utente venga disconnesso
+
+// Dimensione in bytes delle due strutture per contenere i messaggi
+#define DIM_MSG_LAVAGNA_UTENTE (6 + LUNGHEZZA_TESTO + 2 * MAX_UTENTI)   
+#define DIM_MSG_UTENTE_LAVAGNA (8 + LUNGHEZZA_TESTO)                
 
 // Colonne della lavagna: una per ogni stato dei lavori
 enum Colonne {
@@ -45,7 +49,7 @@ struct Messaggio_lavagna_utente {
     uint16_t lista_porte[MAX_UTENTI]; // Lista delle porte degli utenti attivi
     uint16_t num_utenti; // Numero di utenti attivi
 
-} __attribute__((packed)); // niente padding
+};
 
 // Codici comando per il protocollo Utente -> Lavagna
 enum Comandi_utente_lavagna {
@@ -68,6 +72,6 @@ struct Messaggio_utente_lavagna {
     uint16_t id_card; // Id della card
     uint16_t colonna; // Valore da enum Colonne
     char testo[LUNGHEZZA_TESTO]; // Descrizione attività
-} __attribute__((packed)); // niente padding
+};
 
 #endif

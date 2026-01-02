@@ -173,7 +173,7 @@ void esegui_review(struct Messaggio_lavagna_utente * msg) {
     }
 
     // Richiesta di approvazione P2P
-    // per via di ((packed)) non è detto che la lista in msg sia allineata: deve essere copiata su un buffer locale
+    // La lista viene ricopiata in un buffer di interi
     int lista_porte_allineata[MAX_UTENTI]; 
     for (int i = 0; i < MAX_UTENTI; i++) {
         lista_porte_allineata[i] = msg->lista_porte[i];

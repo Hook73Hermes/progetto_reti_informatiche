@@ -60,7 +60,7 @@ void show_lavagna() {
     printf("\n");
 
     // Linea superiore
-    printf("+-%s-+-%s-+-%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
+    printf("+-%s---%s---%s-+\n", linea_lunghezza_colonna, linea_lunghezza_colonna, linea_lunghezza_colonna);
     
     // Nome della lavagna
     printf("| %-*s |\n", LARGHEZZA_DISPLAY_COLONNA * NUM_COLONNE + 3 * (NUM_COLONNE - 1), nome_lavagna);

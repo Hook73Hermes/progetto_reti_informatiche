@@ -11,8 +11,8 @@
 
 // Invia un messaggio generico utente -> lavagna
 // Per lasciare dei dati di un pacchetto a 0, basta passare NULL per il rispettivo parametro
-// I campi vengono semplicemente copiati in una struttura messaggio
 // I campi interi vengono portati in endianness della rete
+// I campi vengono copiati in una struttura messaggio e poi serializzati e spediti
 void invia_messaggio(int socket_fd, enum Comandi_utente_lavagna comando, int porta_utente, int id_card, enum Colonne colonna, char * testo) {
     struct Messaggio_utente_lavagna msg;
     memset(&msg, 0, sizeof(msg));
@@ -23,29 +23,37 @@ void invia_messaggio(int socket_fd, enum Comandi_utente_lavagna comando, int por
     msg.colonna = htons((uint16_t)colonna);
     if (testo != NULL) snprintf(msg.testo, LUNGHEZZA_TESTO, "%s", testo);
 
+    // Serializzazione del messaggio
+    char buffer[DIM_MSG_UTENTE_LAVAGNA];
+    serializza_messaggio(buffer, msg);
+
     // Invio del messaggio utilizzando il socket
-    if (send(socket_fd, &msg, sizeof(msg), 0) < 0) {
+    if (send(socket_fd, buffer, DIM_MSG_UTENTE_LAVAGNA, 0) < 0) {
         perror("Errore invio messaggio Utente -> Lavagna");
     }
 }
 
 // Riceve un messaggio generico lavagna -> utente
 // Restituisce il numero di bytes letti, 0 se il socket è stato chiuso dall'altra parte e -1 in caso di errori
-// I campi del messaggio in ingresso vengono semplicemente copiati in una struttura messaggio passata tramite puntatore
+// Il messaggio ricevuto e deserializzato in una struttura messaggio
 // I campi interi vengono portati in endianness dell'architettura
 int ricevi_messaggio(int socket_fd, struct Messaggio_lavagna_utente * msg) {
-    memset(msg, 0, sizeof(struct Messaggio_lavagna_utente));
+    char buffer[DIM_MSG_LAVAGNA_UTENTE];
 
-    int bytes_letti = recv(socket_fd, msg, sizeof(struct Messaggio_lavagna_utente), 0);
+    int bytes_letti = recv(socket_fd, buffer, DIM_MSG_LAVAGNA_UTENTE, 0);
     if (bytes_letti == 0) {
         // Connessione chiusa dall'altra parte
         return 0; 
     }
-    if (bytes_letti < 0 || bytes_letti != sizeof(struct Messaggio_lavagna_utente)) {
+    if (bytes_letti < 0 || bytes_letti != DIM_MSG_LAVAGNA_UTENTE) {
         // Errore durante la ricezione
         perror("Errore nella ricezione messaggio Lavagna -> Utente");
         return -1;
     }
+
+    // Deserializzazione del messaggio
+    memset(msg, 0, sizeof(struct Messaggio_lavagna_utente));
+    deserializza_messaggio(buffer, msg);
 
     msg->comando_lavagna = ntohs(msg->comando_lavagna);
     msg->id_card = ntohs(msg->id_card);
@@ -55,4 +63,24 @@ int ricevi_messaggio(int socket_fd, struct Messaggio_lavagna_utente * msg) {
     }
 
     return bytes_letti;
+}
+
+// Funzione che serializza un generico messaggio utente ->lavagna
+// Trasferisce tutti i campi da una struttura a un buffer di char
+void serializza_messaggio(char * buffer, struct Messaggio_utente_lavagna msg) {
+    memcpy(buffer, &(msg.comando_utente), 2);
+    memcpy(buffer + 2, &(msg.porta_utente), 2);
+    memcpy(buffer + 4, &(msg.id_card), 2);
+    memcpy(buffer + 6, &(msg.colonna), 2);
+    memcpy(buffer + 8, &(msg.testo), LUNGHEZZA_TESTO);
+}
+
+// Funzione che deserializza un generico messaggio lavagna -> utente 
+// Trasferisce tutti i campi da un buffer di char a una struttura messaggio
+void deserializza_messaggio(char * buffer, struct Messaggio_lavagna_utente * msg) {
+    memcpy(&(msg->comando_lavagna), buffer, 2);
+    memcpy(&(msg->id_card), buffer + 2, 2);
+    memcpy(&(msg->testo), buffer + 4, LUNGHEZZA_TESTO);
+    memcpy(&(msg->lista_porte), buffer + 4 + LUNGHEZZA_TESTO, 2 * MAX_UTENTI);
+    memcpy(&(msg->num_utenti), buffer + 4 + LUNGHEZZA_TESTO + 2 * MAX_UTENTI, 2);
 }

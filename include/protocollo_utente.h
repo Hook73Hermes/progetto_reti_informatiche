@@ -15,5 +15,7 @@
 
 void invia_messaggio(int socket_fd, enum Comandi_utente_lavagna comando, int porta_utente, int id_card, enum Colonne colonna, char * testo);
 int ricevi_messaggio(int socket_fd, struct Messaggio_lavagna_utente * msg); // Restituisce 0 per connessione chiusa, -1 per errori
+void serializza_messaggio(char * buffer, struct Messaggio_utente_lavagna msg);
+void deserializza_messaggio(char * buffer, struct Messaggio_lavagna_utente * msg);
 
 #endif
